@@ -1278,8 +1278,8 @@ run_speedtest() {
 }
 
 create_iplimit_jails() {
-    # Use default bantime if not passed => 15 minutes
-    local bantime="${1:-15}"
+    # Use default bantime if not passed => 30 minutes
+    local bantime="${1:-30}"
 
     # Uncomment 'allowipv6 = auto' in fail2ban.conf
     sed -i 's/#allowipv6 = auto/allowipv6 = auto/g' /etc/fail2ban/fail2ban.conf
@@ -1310,7 +1310,7 @@ EOF
 
     cat << EOF > /etc/fail2ban/action.d/3x-ipl.conf
 [INCLUDES]
-before = iptables-common.conf
+before = iptables-allports.conf
 
 [Definition]
 actionstart = <iptables> -N f2b-<name>
@@ -1358,8 +1358,8 @@ iplimit_main() {
     echo -e "${green}\t2.${plain} Change Ban Duration"
     echo -e "${green}\t3.${plain} Unban Everyone"
     echo -e "${green}\t4.${plain} Ban Logs"
-    echo -e "${green}\t5.${plain} Unban an IP Address"
-    echo -e "${green}\t6.${plain} Ban an IP Address"
+    echo -e "${green}\t5.${plain} Ban an IP Address"
+    echo -e "${green}\t6.${plain} Unban an IP Address"
     echo -e "${green}\t7.${plain} Real-Time Logs"
     echo -e "${green}\t8.${plain} Service Status"
     echo -e "${green}\t9.${plain} Service Restart"
@@ -1391,7 +1391,7 @@ iplimit_main() {
     3)
         confirm "Proceed with Unbanning everyone from IP Limit jail?" "y"
         if [[ $? == 0 ]]; then
-            systemctl restart fail2ban
+            fail2ban-client reload --restart --unban 3x-ipl
             truncate -s 0 "${iplimit_banned_log_path}"
             echo -e "${green}All users Unbanned successfully.${plain}"
             iplimit_main
@@ -1406,7 +1406,7 @@ iplimit_main() {
         ;;
     5)
         read -rp "Enter the IP address you want to ban: " ban_ip
-        if [[ $ban_ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        if [[ $ban_ip =~ ^(((25[0-5]|2[0-4][0-9]|[01]?[0-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9]?[0-9]))$ || $ban_ip =~ ^(([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4})$ ]]; then
             fail2ban-client set 3x-ipl banip "$ban_ip"
             echo -e "${green}IP Address ${ban_ip} has been banned successfully.${plain}"
         else
@@ -1416,7 +1416,7 @@ iplimit_main() {
         ;;
     6)
         read -rp "Enter the IP address you want to unban: " unban_ip
-        if [[ $unban_ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        if [[ $unban_ip =~ ^(((25[0-5]|2[0-4][0-9]|[01]?[0-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9]?[0-9]))$ || $unban_ip =~ ^(([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4})$ ]]; then
             fail2ban-client set 3x-ipl unbanip "$unban_ip"
             echo -e "${green}IP Address ${unban_ip} has been unbanned successfully.${plain}"
         else
@@ -1440,7 +1440,7 @@ iplimit_main() {
         remove_iplimit
         iplimit_main
         ;;
-    *) 
+    *)
         echo -e "${red}Invalid option. Please select a valid number.${plain}\n"
         iplimit_main
         ;;
