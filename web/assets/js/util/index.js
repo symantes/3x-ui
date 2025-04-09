@@ -681,6 +681,11 @@ class URLBuilder {
 class LanguageManager {
     static supportedLanguages = [
         {
+            name: "العربية",
+            value: "ar-EG",
+            icon: "🇪🇬",
+        },
+        {
             name: "English",
             value: "en-US",
             icon: "🇺🇸",
@@ -799,4 +804,24 @@ const MediaQueryMixin = {
     beforeDestroy() {
         window.removeEventListener('resize', this.updateDeviceType);
     },
+}
+
+class FileManager {
+    static downloadTextFile(content, filename='file.txt', options = { type: "text/plain" }) {
+        let link = window.document.createElement('a');
+
+        link.download = filename;
+        link.style.border = '0';
+        link.style.padding = '0';
+        link.style.margin = '0';
+        link.style.position = 'absolute';
+        link.style.left = '-9999px';
+        link.style.top = `${window.pageYOffset || window.document.documentElement.scrollTop}px`;
+        link.href = URL.createObjectURL(new Blob([content], options));
+        link.click();
+
+        URL.revokeObjectURL(link.href);
+
+        link.remove();
+    }
 }
