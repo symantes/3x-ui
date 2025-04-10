@@ -35,19 +35,6 @@ else
 fi
 echo "The OS release is: $release"
 
-check_glibc_version() {
-    glibc_version=$(ldd --version | head -n1 | awk '{print $NF}')
-    
-    required_version="2.32"
-    if [[ "$(printf '%s\n' "$required_version" "$glibc_version" | sort -V | head -n1)" != "$required_version" ]]; then
-        echo -e "${red}GLIBC version $glibc_version is too old! Required: 2.32 or higher${plain}"
-        echo "Please upgrade to a newer version of your operating system to get a higher GLIBC version."
-        exit 1
-    fi
-    echo "GLIBC version: $glibc_version (meets requirement of 2.32+)"
-}
-check_glibc_version
-
 os_version=""
 os_version=$(grep "^VERSION_ID" /etc/os-release | cut -d '=' -f2 | tr -d '"' | tr -d '.')
 
@@ -130,7 +117,7 @@ update_menu() {
 
     if [[ $? == 0 ]]; then
         echo -e "${green}Update successful. The panel has automatically restarted.${plain}"
-        before_show_menu
+        exit 0
     else
         echo -e "${red}Failed to update the menu.${plain}"
         return 1
